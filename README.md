@@ -2,6 +2,9 @@
 
 Student ID: 113062206
 
+- **Game Hosting:** [https://mario-3f46d.web.app](https://mario-3f46d.web.app)
+- **GitHub Repository:** [https://github.com/4o4hasfound/Mario](https://github.com/4o4hasfound/Mario)
+
 ## Completed Features
 
 ### 1. Complete Game Process
@@ -12,7 +15,7 @@ Student ID: 113062206
 - **World Map:** Added gravity and collisions. The camera follows Mario as he moves.
 - **Level Design:** Created static walls, question blocks, and pipes.
 - **Player:** Mario can walk and jump using the keyboard. He takes damage from enemies, dies if he falls down a hole, and respawns properly.
-- **Enemies:** Added Goomba, Koopa (Turtle), and Piranha Plant. You can kill them by jumping on their heads!
+- **Enemies:** Added Goomba, Turtle. You can kill them by jumping on their heads
 - **Question Blocks:** Hitting blocks from below gives coins or a mushroom that makes Mario grow big.
 
 ### 3. Animations
@@ -21,8 +24,8 @@ Student ID: 113062206
 - The Piranha Plant has an animation for popping out of the pipe.
 
 ### 4. Sound Effects
-- Added background music (BGM).
-- Added sound effects for jump, die, stomp, coins, and power-ups.
+- Added background music.
+- Added sound effects for jump, die.
 - The sound effects play without stopping the BGM.
 
 ### 5. UI
