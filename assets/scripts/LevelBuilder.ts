@@ -594,25 +594,30 @@ export default class LevelBuilder extends cc.Component {
                 mountainTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
 
                 // --- POPULATE BASE SCENERY (Mountains & Bushes) ---
-                for (let i = 0; i < levelWidth / 6; i++) {
+                for (let i = 0; i < levelWidth / 10; i++) {
                     let bgElement = new cc.Node('BgElement');
                     let sprite = bgElement.addComponent(cc.Sprite);
-
-                    let isMountain = i % 2 === 0;
-
+                    
+                    // Randomize between Mountain and Bush
+                    let isMountain = Math.random() > 0.6;
+                    
                     if (isMountain) {
                         sprite.spriteFrame = mountainFrame;
                         bgElement.color = cc.Color.WHITE;
                     } else {
-                        sprite.spriteFrame = cloudFrame;
-                        bgElement.color = new cc.Color(73, 208, 32); // Bush green
+                        sprite.spriteFrame = cloudFrame; // Cloud texture used as a bush
+                        bgElement.color = new cc.Color(73, 208, 32); // Tinted green
                     }
-
-                    bgElement.y = 48; // On the ground
+                    
+                    bgElement.y = 48; // Firmly on the ground
                     sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
-                    bgElement.scale = 2; // Standard scale
-                    bgElement.x = (i * 6 * tileSize) + Math.random() * 100;
-
+                    
+                    // Random scale between 1.5 and 2.5
+                    bgElement.scale = 1.5 + Math.random(); 
+                    
+                    // Pure random X position across the whole level
+                    bgElement.x = Math.random() * (levelWidth * tileSize);
+                    
                     baseSceneryLayer.addChild(bgElement);
                 }
 
@@ -623,22 +628,23 @@ export default class LevelBuilder extends cc.Component {
                     sprite.spriteFrame = cloudFrame;
                     sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
                     cloudElement.color = cc.Color.WHITE;
-
-                    let isBig = i % 2 === 0;
-
+                    
+                    let isBig = Math.random() > 0.5;
+                    
                     if (isBig) {
-                        // Bigger clouds scroll slower (higher ratio)
-                        cloudElement.scale = 2.4;
-                        cloudElement.y = 180 + Math.random() * 100;
-                        cloudElement.x = (i * 20 * tileSize) + Math.random() * 300;
+                        cloudElement.scale = 2.0 + Math.random(); // 2.0 to 3.0
+                        // Huge Y variance (from mid-screen to very top)
+                        cloudElement.y = 150 + Math.random() * 250; 
                         slowCloudLayer.addChild(cloudElement);
                     } else {
-                        // Smaller clouds scroll faster (lower ratio)
-                        cloudElement.scale = 1.6;
-                        cloudElement.y = 140 + Math.random() * 80;
-                        cloudElement.x = (i * 20 * tileSize) + Math.random() * 300;
+                        cloudElement.scale = 1.0 + Math.random(); // 1.0 to 2.0
+                        // Huge Y variance
+                        cloudElement.y = 100 + Math.random() * 250; 
                         fastCloudLayer.addChild(cloudElement);
                     }
+                    
+                    // Pure random X position across the whole level
+                    cloudElement.x = Math.random() * (levelWidth * tileSize);
                 }
             });
         });
