@@ -562,12 +562,24 @@ export default class LevelBuilder extends cc.Component {
         bgNode.height = 1000;
         bgNode.color = new cc.Color(107, 140, 255);
         
-        // Create Parallax Layer for scenery
-        let parallaxLayer = new cc.Node('ParallaxLayer');
-        bgNode.parent.addChild(parallaxLayer, bgNode.zIndex + 1);
-        
-        let parallaxComp = parallaxLayer.addComponent('ParallaxBackground') as any;
-        parallaxComp.parallaxRatio = 0.5;
+        // --- Create Multi-Plane Parallax Layers ---
+        // Far background (moves slowly, follows camera almost perfectly)
+        let skyLayer = new cc.Node('SkyParallax');
+        bgNode.parent.addChild(skyLayer, bgNode.zIndex + 1);
+        let skyParallax = skyLayer.addComponent('ParallaxBackground') as any;
+        skyParallax.parallaxRatio = 0.85;
+
+        // Mid background (mountains)
+        let mountainLayer = new cc.Node('MountainParallax');
+        bgNode.parent.addChild(mountainLayer, bgNode.zIndex + 2);
+        let mountainParallax = mountainLayer.addComponent('ParallaxBackground') as any;
+        mountainParallax.parallaxRatio = 0.5;
+
+        // Near background (bushes, moves almost at ground speed)
+        let bushLayer = new cc.Node('BushParallax');
+        bgNode.parent.addChild(bushLayer, bgNode.zIndex + 3);
+        let bushParallax = bushLayer.addComponent('ParallaxBackground') as any;
+        bushParallax.parallaxRatio = 0.2;
 
         // Generate proper clouds, mountains, and bushes
         cc.assetManager.loadRemote(cloudBase64, { ext: '.png' }, (err, cloudTex: cc.Texture2D) => {
@@ -576,37 +588,45 @@ export default class LevelBuilder extends cc.Component {
                 if (err2) return;
                 
                 let cloudFrame = new cc.SpriteFrame(cloudTex);
-                // Fix filtering so it's crispy pixels
                 cloudTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
                 
                 let mountainFrame = new cc.SpriteFrame(mountainTex);
                 mountainTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
 
-                // Increase density of background elements (levelWidth / 8)
-                for (let i = 0; i < levelWidth / 8; i++) {
+                // Populate elements across the expanded level width
+                for (let i = 0; i < levelWidth / 6; i++) {
                     let bgElement = new cc.Node('BgElement');
                     let sprite = bgElement.addComponent(cc.Sprite);
                     
                     let type = i % 3; // 0 = cloud, 1 = mountain, 2 = bush
                     
                     if (type === 0) {
+                        // Clouds (Far distance)
                         sprite.spriteFrame = cloudFrame;
-                        bgElement.y = 120 + Math.random() * 150; // High in the sky
+                        bgElement.y = 120 + Math.random() * 180; 
+                        bgElement.scale = 2 + Math.random(); // Varied sizes
+                        bgElement.x = (i * 6 * tileSize) + Math.random() * 300;
+                        skyLayer.addChild(bgElement);
+                        
                     } else if (type === 1) {
+                        // Mountains (Mid distance)
                         sprite.spriteFrame = mountainFrame;
-                        bgElement.y = 48; // On the ground
+                        bgElement.y = 48; 
+                        bgElement.scale = 2 + Math.random() * 0.5; 
+                        bgElement.x = (i * 6 * tileSize) + Math.random() * 200;
+                        mountainLayer.addChild(bgElement);
+                        
                     } else {
-                        // Bush (Classic Mario Trick: tinted cloud sprite!)
+                        // Bushes (Close distance)
                         sprite.spriteFrame = cloudFrame;
-                        bgElement.color = new cc.Color(73, 208, 32); // Bush green
-                        bgElement.y = 48; // On the ground
+                        bgElement.color = new cc.Color(73, 208, 32); 
+                        bgElement.y = 48; 
+                        bgElement.scale = 1.5 + Math.random(); 
+                        bgElement.x = (i * 6 * tileSize) + Math.random() * 150;
+                        bushLayer.addChild(bgElement);
                     }
                     
                     sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
-                    bgElement.scale = 2; // Scale 2x for classic look
-                    bgElement.x = (i * 8 * tileSize) + Math.random() * 200;
-                    
-                    parallaxLayer.addChild(bgElement);
                 }
             });
         });
