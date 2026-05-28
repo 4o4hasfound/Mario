@@ -86,12 +86,12 @@ export default class LevelBuilder extends cc.Component {
     // ── Internal ───────────────────────────────────────────────────
     private _levelContainer: cc.Node = null;
     private _playerNode: cc.Node = null;
-    
+
     onLoad() {
         // Enable physics
         cc.director.getPhysicsManager().enabled = true;
         cc.director.getPhysicsManager().gravity = cc.v2(0, -960);
-        
+
         this._levelContainer = new cc.Node('LevelContainer');
         this.node.addChild(this._levelContainer);
     }
@@ -111,7 +111,7 @@ export default class LevelBuilder extends cc.Component {
 
     private _buildLevel(config: LevelConfig) {
         const { width, height, tileSize, tiles, enemies, coins,
-                playerStartCol, playerStartRow, flagCol, flagRow, timeLimit } = config;
+            playerStartCol, playerStartRow, flagCol, flagRow, timeLimit } = config;
 
         this._buildTiles(tiles, width, height, tileSize);
         this._spawnPlayer(playerStartCol, playerStartRow, tileSize);
@@ -232,7 +232,7 @@ export default class LevelBuilder extends cc.Component {
         const sprite = node.addComponent(cc.Sprite);
         sprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
         sprite.spriteFrame = this.brickFrame;
-        
+
         node.width = tileSize;
         node.height = tileSize;
 
@@ -256,7 +256,7 @@ export default class LevelBuilder extends cc.Component {
         const sprite = node.addComponent(cc.Sprite);
         sprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
         sprite.spriteFrame = this.questionBlockFrame;
-        
+
         node.width = tileSize;
         node.height = tileSize;
 
@@ -457,7 +457,7 @@ export default class LevelBuilder extends cc.Component {
 
         const flagNode = new cc.Node('Flag');
         const flagSprite = flagNode.addComponent(cc.Sprite);
-        
+
         // We will just color a box to act as a flag to use even fewer block references
         flagSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
         flagNode.width = 32;
@@ -486,7 +486,7 @@ export default class LevelBuilder extends cc.Component {
     private _spawnHut(col: number, row: number, tileSize: number) {
         const hutNode = new cc.Node('Hut');
         hutNode.setPosition(col * tileSize, row * tileSize);
-        
+
         // A simple 3x3 castle structure using hard blocks
         const positions = [
             // Left wall
@@ -501,12 +501,12 @@ export default class LevelBuilder extends cc.Component {
 
         for (let i = 0; i < positions.length; i++) {
             const block = new cc.Node('HutBlock');
-            block.setPosition(positions[i].x + tileSize/2, positions[i].y + tileSize/2);
+            block.setPosition(positions[i].x + tileSize / 2, positions[i].y + tileSize / 2);
             block.width = tileSize;
             block.height = tileSize;
             const sprite = block.addComponent(cc.Sprite);
             sprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
-            
+
             if (i >= 7) {
                 // Door
                 sprite.spriteFrame = this.groundFrame; // Use any frame so we can tint it
@@ -516,7 +516,7 @@ export default class LevelBuilder extends cc.Component {
             }
             hutNode.addChild(block);
         }
-        
+
         this._levelContainer.addChild(hutNode);
     }
 
@@ -543,7 +543,7 @@ export default class LevelBuilder extends cc.Component {
 
     private _setupBackground(levelWidth: number, tileSize: number) {
         let bgNode = this.backgroundNode || cc.find('Canvas/Background') || cc.find('Canvas/bg');
-        
+
         // 1. Force the camera to render a sky blue background so it is never pitch black
         let cam = cc.Camera.main;
         if (cam) {
@@ -552,7 +552,7 @@ export default class LevelBuilder extends cc.Component {
         }
 
         if (!bgNode) return;
-        
+
         // Try to add a sprite if one doesn't exist, to support coloring the node itself
         if (!bgNode.getComponent(cc.Sprite)) {
             let sprite = bgNode.addComponent(cc.Sprite);
@@ -561,35 +561,35 @@ export default class LevelBuilder extends cc.Component {
         bgNode.width = levelWidth * tileSize + 2000; // Extend to ensure no edges show
         bgNode.height = 1000;
         bgNode.color = new cc.Color(107, 140, 255);
-        
+
         // 2. Base Scenery Layer (Mountains and bushes)
         let baseSceneryLayer = new cc.Node('BaseSceneryLayer');
         bgNode.parent.addChild(baseSceneryLayer, bgNode.zIndex + 1);
         let baseSceneryComp = baseSceneryLayer.addComponent('ParallaxBackground') as any;
         baseSceneryComp.parallaxRatio = 0.5;
 
-        // 3. Slow Cloud Layer (Bigger clouds, scrolling slower)
+        // 3. Slow Cloud Layer (Bigger clouds, scrolling slightly slower)
         let slowCloudLayer = new cc.Node('SlowCloudLayer');
         bgNode.parent.addChild(slowCloudLayer, bgNode.zIndex + 2);
         let slowCloudComp = slowCloudLayer.addComponent('ParallaxBackground') as any;
-        slowCloudComp.parallaxRatio = 0.65;
+        slowCloudComp.parallaxRatio = 0.55;
 
-        // 4. Fast Cloud Layer (Smaller clouds, scrolling faster)
+        // 4. Fast Cloud Layer (Smaller clouds, scrolling slightly faster)
         let fastCloudLayer = new cc.Node('FastCloudLayer');
         bgNode.parent.addChild(fastCloudLayer, bgNode.zIndex + 3);
         let fastCloudComp = fastCloudLayer.addComponent('ParallaxBackground') as any;
-        fastCloudComp.parallaxRatio = 0.35;
+        fastCloudComp.parallaxRatio = 0.45;
 
         // Generate proper clouds, mountains, and bushes
         cc.assetManager.loadRemote(cloudBase64, { ext: '.png' }, (err, cloudTex: cc.Texture2D) => {
             if (err) return;
             cc.assetManager.loadRemote(mountainBase64, { ext: '.png' }, (err2, mountainTex: cc.Texture2D) => {
                 if (err2) return;
-                
+
                 let cloudFrame = new cc.SpriteFrame(cloudTex);
                 // Fix filtering so it's crispy pixels
                 cloudTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
-                
+
                 let mountainFrame = new cc.SpriteFrame(mountainTex);
                 mountainTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
 
@@ -597,9 +597,9 @@ export default class LevelBuilder extends cc.Component {
                 for (let i = 0; i < levelWidth / 6; i++) {
                     let bgElement = new cc.Node('BgElement');
                     let sprite = bgElement.addComponent(cc.Sprite);
-                    
+
                     let isMountain = i % 2 === 0;
-                    
+
                     if (isMountain) {
                         sprite.spriteFrame = mountainFrame;
                         bgElement.color = cc.Color.WHITE;
@@ -607,12 +607,12 @@ export default class LevelBuilder extends cc.Component {
                         sprite.spriteFrame = cloudFrame;
                         bgElement.color = new cc.Color(73, 208, 32); // Bush green
                     }
-                    
+
                     bgElement.y = 48; // On the ground
                     sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
                     bgElement.scale = 2; // Standard scale
                     bgElement.x = (i * 6 * tileSize) + Math.random() * 100;
-                    
+
                     baseSceneryLayer.addChild(bgElement);
                 }
 
@@ -623,9 +623,9 @@ export default class LevelBuilder extends cc.Component {
                     sprite.spriteFrame = cloudFrame;
                     sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
                     cloudElement.color = cc.Color.WHITE;
-                    
+
                     let isBig = i % 2 === 0;
-                    
+
                     if (isBig) {
                         // Bigger clouds scroll slower (higher ratio)
                         cloudElement.scale = 2.4;
