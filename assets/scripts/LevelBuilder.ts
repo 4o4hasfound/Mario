@@ -562,17 +562,23 @@ export default class LevelBuilder extends cc.Component {
         bgNode.height = 1000;
         bgNode.color = new cc.Color(107, 140, 255);
         
-        // 2. Create FAR Parallax Layer (Mountains, light bushes, regular clouds)
-        let farParallaxLayer = new cc.Node('FarParallaxLayer');
-        bgNode.parent.addChild(farParallaxLayer, bgNode.zIndex + 1);
-        let farParallaxComp = farParallaxLayer.addComponent('ParallaxBackground') as any;
-        farParallaxComp.parallaxRatio = 0.5;
+        // 2. Base Scenery Layer (Mountains and bushes)
+        let baseSceneryLayer = new cc.Node('BaseSceneryLayer');
+        bgNode.parent.addChild(baseSceneryLayer, bgNode.zIndex + 1);
+        let baseSceneryComp = baseSceneryLayer.addComponent('ParallaxBackground') as any;
+        baseSceneryComp.parallaxRatio = 0.5;
 
-        // 3. Create NEAR Parallax Layer (Foreground huge trees/bushes, giant fast clouds)
-        let nearParallaxLayer = new cc.Node('NearParallaxLayer');
-        bgNode.parent.addChild(nearParallaxLayer, bgNode.zIndex + 2); // Above the far layer
-        let nearParallaxComp = nearParallaxLayer.addComponent('ParallaxBackground') as any;
-        nearParallaxComp.parallaxRatio = 0.85;
+        // 3. Slow Cloud Layer (Bigger clouds, scrolling slower)
+        let slowCloudLayer = new cc.Node('SlowCloudLayer');
+        bgNode.parent.addChild(slowCloudLayer, bgNode.zIndex + 2);
+        let slowCloudComp = slowCloudLayer.addComponent('ParallaxBackground') as any;
+        slowCloudComp.parallaxRatio = 0.65;
+
+        // 4. Fast Cloud Layer (Smaller clouds, scrolling faster)
+        let fastCloudLayer = new cc.Node('FastCloudLayer');
+        bgNode.parent.addChild(fastCloudLayer, bgNode.zIndex + 3);
+        let fastCloudComp = fastCloudLayer.addComponent('ParallaxBackground') as any;
+        fastCloudComp.parallaxRatio = 0.35;
 
         // Generate proper clouds, mountains, and bushes
         cc.assetManager.loadRemote(cloudBase64, { ext: '.png' }, (err, cloudTex: cc.Texture2D) => {
@@ -587,56 +593,52 @@ export default class LevelBuilder extends cc.Component {
                 let mountainFrame = new cc.SpriteFrame(mountainTex);
                 mountainTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
 
-                // --- POPULATE FAR LAYER ---
-                for (let i = 0; i < levelWidth / 8; i++) {
+                // --- POPULATE BASE SCENERY (Mountains & Bushes) ---
+                for (let i = 0; i < levelWidth / 6; i++) {
                     let bgElement = new cc.Node('BgElement');
                     let sprite = bgElement.addComponent(cc.Sprite);
                     
-                    let type = i % 3; // 0 = cloud, 1 = mountain, 2 = far bush
+                    let isMountain = i % 2 === 0;
                     
-                    if (type === 0) {
-                        sprite.spriteFrame = cloudFrame;
-                        bgElement.y = 120 + Math.random() * 150; // High in the sky
-                    } else if (type === 1) {
+                    if (isMountain) {
                         sprite.spriteFrame = mountainFrame;
-                        bgElement.y = 48; // On the ground
+                        bgElement.color = cc.Color.WHITE;
                     } else {
                         sprite.spriteFrame = cloudFrame;
-                        bgElement.color = new cc.Color(73, 208, 32); // Light bush green
-                        bgElement.y = 48; // On the ground
+                        bgElement.color = new cc.Color(73, 208, 32); // Bush green
                     }
                     
+                    bgElement.y = 48; // On the ground
                     sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
                     bgElement.scale = 2; // Standard scale
-                    bgElement.x = (i * 8 * tileSize) + Math.random() * 200;
+                    bgElement.x = (i * 6 * tileSize) + Math.random() * 100;
                     
-                    farParallaxLayer.addChild(bgElement);
+                    baseSceneryLayer.addChild(bgElement);
                 }
 
-                // --- POPULATE NEAR LAYER ---
-                for (let i = 0; i < levelWidth / 15; i++) {
-                    let nearElement = new cc.Node('NearElement');
-                    let sprite = nearElement.addComponent(cc.Sprite);
-                    
-                    let type = i % 2; // 0 = Near Cloud, 1 = Near Tree/Bush
-                    
-                    sprite.spriteFrame = cloudFrame; // We use the cloud frame for both
+                // --- POPULATE CLOUDS ---
+                for (let i = 0; i < levelWidth / 6; i++) {
+                    let cloudElement = new cc.Node('CloudElement');
+                    let sprite = cloudElement.addComponent(cc.Sprite);
+                    sprite.spriteFrame = cloudFrame;
                     sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
+                    cloudElement.color = cc.Color.WHITE;
                     
-                    if (type === 0) {
-                        // Giant Foreground Cloud
-                        nearElement.color = new cc.Color(255, 255, 255, 180); // Slightly transparent
-                        nearElement.scale = 3.5; // Huge
-                        nearElement.y = 200 + Math.random() * 150;
+                    let isBig = i % 2 === 0;
+                    
+                    if (isBig) {
+                        // Bigger clouds scroll slower (higher ratio)
+                        cloudElement.scale = 2.4;
+                        cloudElement.y = 180 + Math.random() * 100;
+                        cloudElement.x = (i * 6 * tileSize) + Math.random() * 200;
+                        slowCloudLayer.addChild(cloudElement);
                     } else {
-                        // Giant Foreground Tree/Shrub
-                        nearElement.color = new cc.Color(34, 139, 34); // Dark Forest Green
-                        nearElement.scale = 3.5; // Huge
-                        nearElement.y = 16; // Sink it slightly into the ground
+                        // Smaller clouds scroll faster (lower ratio)
+                        cloudElement.scale = 1.6;
+                        cloudElement.y = 140 + Math.random() * 80;
+                        cloudElement.x = (i * 6 * tileSize) + Math.random() * 200;
+                        fastCloudLayer.addChild(cloudElement);
                     }
-                    
-                    nearElement.x = (i * 15 * tileSize) + Math.random() * 400;
-                    nearParallaxLayer.addChild(nearElement);
                 }
             });
         });
