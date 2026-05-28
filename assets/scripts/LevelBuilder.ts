@@ -543,18 +543,33 @@ export default class LevelBuilder extends cc.Component {
 
     private _setupBackground(levelWidth: number, tileSize: number) {
         let bgNode = this.backgroundNode || cc.find('Canvas/Background') || cc.find('Canvas/bg');
+        
+        // 1. Force the camera to render a sky blue background so it is never pitch black
+        let cam = cc.Camera.main;
+        if (cam) {
+            cam.backgroundColor = new cc.Color(107, 140, 255); // Classic Mario Sky Blue
+            cam.clearFlags = cc.Camera.ClearFlags.DEPTH | cc.Camera.ClearFlags.STENCIL | cc.Camera.ClearFlags.COLOR;
+        }
+
         if (!bgNode) return;
+        
+        // Try to add a sprite if one doesn't exist, to support coloring the node itself
+        if (!bgNode.getComponent(cc.Sprite)) {
+            let sprite = bgNode.addComponent(cc.Sprite);
+            sprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
+        }
         bgNode.width = levelWidth * tileSize + 2000; // Extend to ensure no edges show
+        bgNode.height = 1000;
         bgNode.color = new cc.Color(107, 140, 255);
         
-        // Create Parallax Layer for clouds
+        // Create Parallax Layer for scenery
         let parallaxLayer = new cc.Node('ParallaxLayer');
         bgNode.parent.addChild(parallaxLayer, bgNode.zIndex + 1);
         
         let parallaxComp = parallaxLayer.addComponent('ParallaxBackground') as any;
         parallaxComp.parallaxRatio = 0.5;
 
-        // Generate proper clouds and mountains
+        // Generate proper clouds, mountains, and bushes
         cc.assetManager.loadRemote(cloudBase64, { ext: '.png' }, (err, cloudTex: cc.Texture2D) => {
             if (err) return;
             cc.assetManager.loadRemote(mountainBase64, { ext: '.png' }, (err2, mountainTex: cc.Texture2D) => {
@@ -567,20 +582,29 @@ export default class LevelBuilder extends cc.Component {
                 let mountainFrame = new cc.SpriteFrame(mountainTex);
                 mountainTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
 
-                for (let i = 0; i < levelWidth / 15; i++) {
+                // Increase density of background elements (levelWidth / 8)
+                for (let i = 0; i < levelWidth / 8; i++) {
                     let bgElement = new cc.Node('BgElement');
                     let sprite = bgElement.addComponent(cc.Sprite);
                     
-                    let isCloud = i % 2 === 0;
-                    sprite.spriteFrame = isCloud ? cloudFrame : mountainFrame;
+                    let type = i % 3; // 0 = cloud, 1 = mountain, 2 = bush
+                    
+                    if (type === 0) {
+                        sprite.spriteFrame = cloudFrame;
+                        bgElement.y = 120 + Math.random() * 150; // High in the sky
+                    } else if (type === 1) {
+                        sprite.spriteFrame = mountainFrame;
+                        bgElement.y = 48; // On the ground
+                    } else {
+                        // Bush (Classic Mario Trick: tinted cloud sprite!)
+                        sprite.spriteFrame = cloudFrame;
+                        bgElement.color = new cc.Color(73, 208, 32); // Bush green
+                        bgElement.y = 48; // On the ground
+                    }
+                    
                     sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
-                    
                     bgElement.scale = 2; // Scale 2x for classic look
-                    bgElement.color = cc.Color.WHITE;
-                    
-                    // Random positions
-                    bgElement.x = (i * 15 * tileSize) + Math.random() * 300;
-                    bgElement.y = isCloud ? (120 + Math.random() * 150) : 32; // Clouds high, mountains low
+                    bgElement.x = (i * 8 * tileSize) + Math.random() * 200;
                     
                     parallaxLayer.addChild(bgElement);
                 }
