@@ -543,7 +543,7 @@ export default class LevelBuilder extends cc.Component {
 
     private _setupBackground(levelWidth: number, tileSize: number) {
         let bgNode = this.backgroundNode || cc.find('Canvas/Background') || cc.find('Canvas/bg');
-        
+
         // 1. Force the camera to render a sky blue background so it is never pitch black
         let cam = cc.Camera.main;
         if (cam) {
@@ -552,7 +552,7 @@ export default class LevelBuilder extends cc.Component {
         }
 
         if (!bgNode) return;
-        
+
         // Try to add a sprite if one doesn't exist, to support coloring the node itself
         if (!bgNode.getComponent(cc.Sprite)) {
             let sprite = bgNode.addComponent(cc.Sprite);
@@ -577,33 +577,33 @@ export default class LevelBuilder extends cc.Component {
         // Generate only white clouds
         cc.assetManager.loadRemote(cloudBase64, { ext: '.png' }, (err, cloudTex: cc.Texture2D) => {
             if (err) return;
-            
+
             let cloudFrame = new cc.SpriteFrame(cloudTex);
             // Fix filtering so it's crispy pixels
             cloudTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
 
             // --- POPULATE CLOUDS ---
-            for (let i = 0; i < levelWidth / 20; i++) {
+            for (let i = 0; i < levelWidth / 8; i++) {
                 let cloudElement = new cc.Node('CloudElement');
                 let sprite = cloudElement.addComponent(cc.Sprite);
                 sprite.spriteFrame = cloudFrame;
                 sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
                 cloudElement.color = cc.Color.WHITE;
-                
-                let isBig = Math.random() > 0.5;
-                
+
+                let isBig = Math.random() > 0.25;
+
                 if (isBig) {
                     cloudElement.scale = 2.0 + Math.random(); // 2.0 to 3.0
                     // Huge Y variance (from mid-screen to very top)
-                    cloudElement.y = 150 + Math.random() * 250; 
+                    cloudElement.y = 150 + Math.random() * 250;
                     slowCloudLayer.addChild(cloudElement);
                 } else {
                     cloudElement.scale = 1.0 + Math.random(); // 1.0 to 2.0
                     // Huge Y variance
-                    cloudElement.y = 100 + Math.random() * 250; 
+                    cloudElement.y = 100 + Math.random() * 250;
                     fastCloudLayer.addChild(cloudElement);
                 }
-                
+
                 // Pure random X position across the whole level
                 cloudElement.x = Math.random() * (levelWidth * tileSize);
             }
