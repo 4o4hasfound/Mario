@@ -562,24 +562,17 @@ export default class LevelBuilder extends cc.Component {
         bgNode.height = 1000;
         bgNode.color = new cc.Color(107, 140, 255);
         
-        // --- Create Multi-Plane Parallax Layers ---
-        // Far background (moves slowly, follows camera almost perfectly)
-        let skyLayer = new cc.Node('SkyParallax');
-        bgNode.parent.addChild(skyLayer, bgNode.zIndex + 1);
-        let skyParallax = skyLayer.addComponent('ParallaxBackground') as any;
-        skyParallax.parallaxRatio = 0.85;
+        // 2. Create FAR Parallax Layer (Mountains, light bushes, regular clouds)
+        let farParallaxLayer = new cc.Node('FarParallaxLayer');
+        bgNode.parent.addChild(farParallaxLayer, bgNode.zIndex + 1);
+        let farParallaxComp = farParallaxLayer.addComponent('ParallaxBackground') as any;
+        farParallaxComp.parallaxRatio = 0.5;
 
-        // Mid background (mountains)
-        let mountainLayer = new cc.Node('MountainParallax');
-        bgNode.parent.addChild(mountainLayer, bgNode.zIndex + 2);
-        let mountainParallax = mountainLayer.addComponent('ParallaxBackground') as any;
-        mountainParallax.parallaxRatio = 0.5;
-
-        // Near background (bushes, moves almost at ground speed)
-        let bushLayer = new cc.Node('BushParallax');
-        bgNode.parent.addChild(bushLayer, bgNode.zIndex + 3);
-        let bushParallax = bushLayer.addComponent('ParallaxBackground') as any;
-        bushParallax.parallaxRatio = 0.2;
+        // 3. Create NEAR Parallax Layer (Foreground huge trees/bushes, giant fast clouds)
+        let nearParallaxLayer = new cc.Node('NearParallaxLayer');
+        bgNode.parent.addChild(nearParallaxLayer, bgNode.zIndex + 2); // Above the far layer
+        let nearParallaxComp = nearParallaxLayer.addComponent('ParallaxBackground') as any;
+        nearParallaxComp.parallaxRatio = 0.85;
 
         // Generate proper clouds, mountains, and bushes
         cc.assetManager.loadRemote(cloudBase64, { ext: '.png' }, (err, cloudTex: cc.Texture2D) => {
@@ -588,45 +581,62 @@ export default class LevelBuilder extends cc.Component {
                 if (err2) return;
                 
                 let cloudFrame = new cc.SpriteFrame(cloudTex);
+                // Fix filtering so it's crispy pixels
                 cloudTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
                 
                 let mountainFrame = new cc.SpriteFrame(mountainTex);
                 mountainTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
 
-                // Populate elements across the expanded level width
-                for (let i = 0; i < levelWidth / 6; i++) {
+                // --- POPULATE FAR LAYER ---
+                for (let i = 0; i < levelWidth / 8; i++) {
                     let bgElement = new cc.Node('BgElement');
                     let sprite = bgElement.addComponent(cc.Sprite);
                     
-                    let type = i % 3; // 0 = cloud, 1 = mountain, 2 = bush
+                    let type = i % 3; // 0 = cloud, 1 = mountain, 2 = far bush
                     
                     if (type === 0) {
-                        // Clouds (Far distance)
                         sprite.spriteFrame = cloudFrame;
-                        bgElement.y = 120 + Math.random() * 180; 
-                        bgElement.scale = 2 + Math.random(); // Varied sizes
-                        bgElement.x = (i * 6 * tileSize) + Math.random() * 300;
-                        skyLayer.addChild(bgElement);
-                        
+                        bgElement.y = 120 + Math.random() * 150; // High in the sky
                     } else if (type === 1) {
-                        // Mountains (Mid distance)
                         sprite.spriteFrame = mountainFrame;
-                        bgElement.y = 48; 
-                        bgElement.scale = 2 + Math.random() * 0.5; 
-                        bgElement.x = (i * 6 * tileSize) + Math.random() * 200;
-                        mountainLayer.addChild(bgElement);
-                        
+                        bgElement.y = 48; // On the ground
                     } else {
-                        // Bushes (Close distance)
                         sprite.spriteFrame = cloudFrame;
-                        bgElement.color = new cc.Color(73, 208, 32); 
-                        bgElement.y = 48; 
-                        bgElement.scale = 1.5 + Math.random(); 
-                        bgElement.x = (i * 6 * tileSize) + Math.random() * 150;
-                        bushLayer.addChild(bgElement);
+                        bgElement.color = new cc.Color(73, 208, 32); // Light bush green
+                        bgElement.y = 48; // On the ground
                     }
                     
                     sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
+                    bgElement.scale = 2; // Standard scale
+                    bgElement.x = (i * 8 * tileSize) + Math.random() * 200;
+                    
+                    farParallaxLayer.addChild(bgElement);
+                }
+
+                // --- POPULATE NEAR LAYER ---
+                for (let i = 0; i < levelWidth / 15; i++) {
+                    let nearElement = new cc.Node('NearElement');
+                    let sprite = nearElement.addComponent(cc.Sprite);
+                    
+                    let type = i % 2; // 0 = Near Cloud, 1 = Near Tree/Bush
+                    
+                    sprite.spriteFrame = cloudFrame; // We use the cloud frame for both
+                    sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
+                    
+                    if (type === 0) {
+                        // Giant Foreground Cloud
+                        nearElement.color = new cc.Color(255, 255, 255, 180); // Slightly transparent
+                        nearElement.scale = 3.5; // Huge
+                        nearElement.y = 200 + Math.random() * 150;
+                    } else {
+                        // Giant Foreground Tree/Shrub
+                        nearElement.color = new cc.Color(34, 139, 34); // Dark Forest Green
+                        nearElement.scale = 3.5; // Huge
+                        nearElement.y = 16; // Sink it slightly into the ground
+                    }
+                    
+                    nearElement.x = (i * 15 * tileSize) + Math.random() * 400;
+                    nearParallaxLayer.addChild(nearElement);
                 }
             });
         });
