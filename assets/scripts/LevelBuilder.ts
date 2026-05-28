@@ -617,7 +617,7 @@ export default class LevelBuilder extends cc.Component {
                 }
 
                 // --- POPULATE CLOUDS ---
-                for (let i = 0; i < levelWidth / 6; i++) {
+                for (let i = 0; i < levelWidth / 20; i++) {
                     let cloudElement = new cc.Node('CloudElement');
                     let sprite = cloudElement.addComponent(cc.Sprite);
                     sprite.spriteFrame = cloudFrame;
@@ -630,13 +630,13 @@ export default class LevelBuilder extends cc.Component {
                         // Bigger clouds scroll slower (higher ratio)
                         cloudElement.scale = 2.4;
                         cloudElement.y = 180 + Math.random() * 100;
-                        cloudElement.x = (i * 6 * tileSize) + Math.random() * 200;
+                        cloudElement.x = (i * 20 * tileSize) + Math.random() * 300;
                         slowCloudLayer.addChild(cloudElement);
                     } else {
                         // Smaller clouds scroll faster (lower ratio)
                         cloudElement.scale = 1.6;
                         cloudElement.y = 140 + Math.random() * 80;
-                        cloudElement.x = (i * 6 * tileSize) + Math.random() * 200;
+                        cloudElement.x = (i * 20 * tileSize) + Math.random() * 300;
                         fastCloudLayer.addChild(cloudElement);
                     }
                 }
