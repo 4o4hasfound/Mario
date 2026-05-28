@@ -86,6 +86,14 @@ export default class CameraFollow extends cc.Component {
             const camDeltaX = this.node.x - this._camStartX;
             this.background.x = this._bgStartX + camDeltaX * this.parallaxRatio;
         }
+
+        // Keep UI glued to the camera's position so it doesn't get left behind
+        let uiNode = cc.find('Canvas/HUD') || cc.find('Canvas/UI Layer') || cc.find('Canvas/UIManager') || cc.find('Canvas/UI');
+        if (uiNode) {
+            uiNode.x = this.node.x;
+            uiNode.y = this.node.y;
+            uiNode.zIndex = 100; // Ensure the UI is drawn on top of everything
+        }
     }
 
     /**

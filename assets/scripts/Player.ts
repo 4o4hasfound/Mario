@@ -474,7 +474,7 @@ export default class Player extends cc.Component {
             if (walkFrames.length > 0) this._sprite.spriteFrame = walkFrames[0];
 
             // New Custom sequence: Shoot up, arc right, land, and walk into hut!
-            const groundY = poleNode.y - 80; // Accurate top of the ground surface
+            const groundY = poleNode.y - 160; // Accurate top of the ground surface (pole height / 2)
             
             cc.tween(this.node)
                 .call(() => {

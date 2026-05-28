@@ -51,3 +51,10 @@ Thumbs.db
 #//////////////////////////
 
 .vscode/
+
+#//////////////////////////
+# Assignment Submission Artifacts
+#//////////////////////////
+Assignment02_*/
+Assignment02_*.zip
+scratch/

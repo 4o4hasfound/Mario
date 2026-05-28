@@ -91,6 +91,13 @@ A Super Mario Bros. style platformer game built with **Cocos Creator 2.4.8**.
 - Invincibility flicker effect
 - Smooth camera following with bounds
 
+### ✅ Bonus (10%)
+- **Firebase (5%)**:
+  - Sign up and Login with Firebase Authentication.
+  - Save/restore game progress (high scores) automatically upon login.
+- **Leaderboard (5%)**:
+  - Global leaderboard fetching the top 10 players' scores from Firestore.
+
 ## Controls
 
 | Key | Action |

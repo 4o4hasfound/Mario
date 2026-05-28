@@ -176,6 +176,25 @@ export default class UIManager extends cc.Component {
             cc.tween(this.levelClearPanel)
                 .to(0.5, { opacity: 255 })
                 .start();
+                
+            // Hide "Next Level" button if this is the final level
+            if (GameManager.instance) {
+                const isFinal = GameManager.instance.currentLevel >= GameManager.instance.unlockedLevels.length - 1;
+                if (isFinal) {
+                    // Recursive search to reliably find 'NextButton' no matter how deep it is nested
+                    const findAndHide = (node: cc.Node, targetName: string) => {
+                        if (node.name === targetName) {
+                            node.active = false;
+                            return true;
+                        }
+                        for (let child of node.children) {
+                            if (findAndHide(child, targetName)) return true;
+                        }
+                        return false;
+                    };
+                    findAndHide(this.levelClearPanel, 'NextButton');
+                }
+            }
         }
 
         // Time bonus: remaining seconds × 50 points
@@ -222,7 +241,12 @@ export default class UIManager extends cc.Component {
     public onNextLevelClicked() {
         if (GameManager.instance) {
             const nextLevel = GameManager.instance.currentLevel + 1;
-            GameManager.instance.startGame(nextLevel);
+            if (nextLevel < GameManager.instance.unlockedLevels.length) {
+                GameManager.instance.startGame(nextLevel);
+            } else {
+                // If clicked on the final level somehow, just go back to the menu
+                GameManager.instance.goToMenu();
+            }
         }
     }
 

@@ -916,7 +916,7 @@
     },
     "component": "",
     "_componentId": "0c5a8wUKC1JOJinEVBotQ/j",
-    "handler": "onLevel2Clicked",
+    "handler": "onLevel1Clicked",
     "customEventData": ""
   },
   {

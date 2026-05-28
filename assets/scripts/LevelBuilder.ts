@@ -1,7 +1,7 @@
 import GameManager from './GameManager';
 import AudioManager from './AudioManager';
 import { Levels, LevelConfig, EnemyDef, CoinDef } from './LevelData';
-import { cloudBase64, mountainBase64 } from './BgAssets';
+import { cloudBase64, mountainBase64, flagBase64 } from './BgAssets';
 
 const { ccclass, property } = cc._decorator;
 
@@ -93,6 +93,7 @@ export default class LevelBuilder extends cc.Component {
         cc.director.getPhysicsManager().gravity = cc.v2(0, -960);
 
         this._levelContainer = new cc.Node('LevelContainer');
+        this._levelContainer.zIndex = -1; // Render level container behind other default elements
         this.node.addChild(this._levelContainer);
     }
 
@@ -445,7 +446,7 @@ export default class LevelBuilder extends cc.Component {
     private _spawnFlag(col: number, row: number, tileSize: number) {
         const poleNode = new cc.Node('FlagPole');
         poleNode.group = 'flag';
-        poleNode.setPosition(col * tileSize + tileSize / 2, row * tileSize + 80);
+        poleNode.setPosition(col * tileSize + tileSize / 2, row * tileSize + 160); // 320 height -> center at 160
 
         const poleSprite = poleNode.addComponent(cc.Sprite);
         poleSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
@@ -453,17 +454,27 @@ export default class LevelBuilder extends cc.Component {
         poleSprite.spriteFrame = this.pipeBodyFrame;
         poleNode.color = cc.Color.WHITE;
         poleNode.width = 16;
-        poleNode.height = 160;
+        poleNode.height = 320; // Increased pole height
 
         const flagNode = new cc.Node('Flag');
         const flagSprite = flagNode.addComponent(cc.Sprite);
 
-        // We will just color a box to act as a flag to use even fewer block references
+        // Use proper flag texture from base64
+        cc.assetManager.loadRemote(flagBase64, { ext: '.png' }, (err, tex: cc.Texture2D) => {
+            if (!err) {
+                tex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
+                flagSprite.spriteFrame = new cc.SpriteFrame(tex);
+                flagSprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
+                flagNode.color = cc.Color.WHITE;
+            }
+        });
+
+        // Fallback size if texture takes a moment
         flagSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
         flagNode.width = 32;
         flagNode.height = 32;
-        flagNode.color = cc.Color.RED; // Red flag block
-        flagNode.setPosition(16, 60);
+        flagNode.color = cc.Color.WHITE;
+        flagNode.setPosition(16, 140); // Position near the top of the taller pole
         poleNode.addChild(flagNode);
 
         const rb = poleNode.addComponent(cc.RigidBody);
@@ -471,13 +482,13 @@ export default class LevelBuilder extends cc.Component {
         rb.enabledContactListener = true;
 
         const collider = poleNode.addComponent(cc.PhysicsBoxCollider);
-        collider.size = cc.size(32, 160);
+        collider.size = cc.size(32, 320);
         collider.sensor = true;
         collider.apply();
 
         const flagComp = poleNode.addComponent('FlagPole') as any;
         flagComp.flagSprite = flagNode;
-        flagComp.poleBaseY = -64;
+        flagComp.poleBaseY = -140; // Slide down to the new bottom
         flagComp.levelClearSound = this.levelClearSound;
 
         this._levelContainer.addChild(poleNode);
@@ -543,70 +554,63 @@ export default class LevelBuilder extends cc.Component {
 
     private _setupBackground(levelWidth: number, tileSize: number) {
         let bgNode = this.backgroundNode || cc.find('Canvas/Background') || cc.find('Canvas/bg');
-
-        // 1. Force the camera to render a sky blue background so it is never pitch black
+        
+        // Force the main camera to render a sky blue background
         let cam = cc.Camera.main;
         if (cam) {
             cam.backgroundColor = new cc.Color(107, 140, 255); // Classic Mario Sky Blue
-            cam.clearFlags = cc.Camera.ClearFlags.DEPTH | cc.Camera.ClearFlags.STENCIL | cc.Camera.ClearFlags.COLOR;
         }
 
         if (!bgNode) return;
 
-        // Try to add a sprite if one doesn't exist, to support coloring the node itself
+        // Add a sprite component so the node's color actually renders
         if (!bgNode.getComponent(cc.Sprite)) {
             let sprite = bgNode.addComponent(cc.Sprite);
             sprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
         }
+
         bgNode.width = levelWidth * tileSize + 2000; // Extend to ensure no edges show
-        bgNode.height = 1000;
+        bgNode.height = 1000; // Ensure it covers vertical space
         bgNode.color = new cc.Color(107, 140, 255);
 
-        // 2. Slow Cloud Layer (Bigger clouds, scrolling slightly slower)
-        let slowCloudLayer = new cc.Node('SlowCloudLayer');
-        bgNode.parent.addChild(slowCloudLayer, bgNode.zIndex + 1);
-        let slowCloudComp = slowCloudLayer.addComponent('ParallaxBackground') as any;
-        slowCloudComp.parallaxRatio = 0.55;
+        // Create Parallax Layer for clouds
+        let parallaxLayer = new cc.Node('ParallaxLayer');
+        bgNode.parent.addChild(parallaxLayer, bgNode.zIndex + 1);
 
-        // 3. Fast Cloud Layer (Smaller clouds, scrolling slightly faster)
-        let fastCloudLayer = new cc.Node('FastCloudLayer');
-        bgNode.parent.addChild(fastCloudLayer, bgNode.zIndex + 2);
-        let fastCloudComp = fastCloudLayer.addComponent('ParallaxBackground') as any;
-        fastCloudComp.parallaxRatio = 0.45;
+        let parallaxComp = parallaxLayer.addComponent('ParallaxBackground') as any;
+        parallaxComp.parallaxRatio = 0.5;
 
-        // Generate only white clouds
+        // Generate proper clouds and mountains
         cc.assetManager.loadRemote(cloudBase64, { ext: '.png' }, (err, cloudTex: cc.Texture2D) => {
             if (err) return;
+            cc.assetManager.loadRemote(mountainBase64, { ext: '.png' }, (err2, mountainTex: cc.Texture2D) => {
+                if (err2) return;
 
-            let cloudFrame = new cc.SpriteFrame(cloudTex);
-            // Fix filtering so it's crispy pixels
-            cloudTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
+                let cloudFrame = new cc.SpriteFrame(cloudTex);
+                // Fix filtering so it's crispy pixels
+                cloudTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
 
-            // --- POPULATE CLOUDS ---
-            for (let i = 0; i < levelWidth / 8; i++) {
-                let cloudElement = new cc.Node('CloudElement');
-                let sprite = cloudElement.addComponent(cc.Sprite);
-                sprite.spriteFrame = cloudFrame;
-                sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
-                cloudElement.color = cc.Color.WHITE;
+                let mountainFrame = new cc.SpriteFrame(mountainTex);
+                mountainTex.setFilters(cc.Texture2D.Filter.NEAREST, cc.Texture2D.Filter.NEAREST);
 
-                let isBig = Math.random() > 0.25;
+                for (let i = 0; i < levelWidth / 15; i++) {
+                    let bgElement = new cc.Node('BgElement');
+                    let sprite = bgElement.addComponent(cc.Sprite);
 
-                if (isBig) {
-                    cloudElement.scale = 2.0 + Math.random(); // 2.0 to 3.0
-                    // Huge Y variance (from mid-screen to very top)
-                    cloudElement.y = 150 + Math.random() * 250;
-                    slowCloudLayer.addChild(cloudElement);
-                } else {
-                    cloudElement.scale = 1.0 + Math.random(); // 1.0 to 2.0
-                    // Huge Y variance
-                    cloudElement.y = 100 + Math.random() * 250;
-                    fastCloudLayer.addChild(cloudElement);
+                    let isCloud = i % 2 === 0;
+                    sprite.spriteFrame = isCloud ? cloudFrame : mountainFrame;
+                    sprite.sizeMode = cc.Sprite.SizeMode.TRIMMED;
+
+                    bgElement.scale = 2; // Scale 2x for classic look
+                    bgElement.color = cc.Color.WHITE;
+
+                    // Random positions
+                    bgElement.x = (i * 15 * tileSize) + Math.random() * 300;
+                    bgElement.y = isCloud ? (120 + Math.random() * 150) : 32; // Clouds high, mountains low
+
+                    parallaxLayer.addChild(bgElement);
                 }
-
-                // Pure random X position across the whole level
-                cloudElement.x = Math.random() * (levelWidth * tileSize);
-            }
+            });
         });
     }
 }

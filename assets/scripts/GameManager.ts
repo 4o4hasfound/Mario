@@ -1,3 +1,4 @@
+import FirebaseManager from './FirebaseManager';
 const { ccclass, property } = cc._decorator;
 
 /**
@@ -60,6 +61,17 @@ export default class GameManager extends cc.Component {
         if (saved) {
             this.highScore = parseInt(saved, 10) || 0;
         }
+
+        // Listen for firebase login to restore cloud highscore
+        cc.systemEvent.on('firebase-login', async () => {
+            if (FirebaseManager.instance) {
+                const cloudScore = await FirebaseManager.instance.fetchMyHighScore();
+                if (cloudScore > this.highScore) {
+                    this.highScore = cloudScore;
+                    cc.sys.localStorage.setItem('mario_highscore', String(this.highScore));
+                }
+            }
+        });
     }
 
     // ── Score ──────────────────────────────────────────────────────
@@ -68,6 +80,9 @@ export default class GameManager extends cc.Component {
         if (this.score > this.highScore) {
             this.highScore = this.score;
             cc.sys.localStorage.setItem('mario_highscore', String(this.highScore));
+            if (FirebaseManager.instance) {
+                FirebaseManager.instance.saveHighScore(this.highScore);
+            }
         }
         cc.systemEvent.emit('score-changed', this.score);
     }
@@ -112,6 +127,9 @@ export default class GameManager extends cc.Component {
 
     public gameOver(): void {
         this.gameState = GameManager.STATE_GAMEOVER;
+        if (FirebaseManager.instance) {
+            FirebaseManager.instance.saveHighScore(this.highScore);
+        }
         cc.systemEvent.emit('game-over');
     }
 
@@ -121,6 +139,11 @@ export default class GameManager extends cc.Component {
         const next = this.currentLevel + 1;
         if (next < this.unlockedLevels.length) {
             this.unlockedLevels[next] = true;
+        } else {
+            // Final level finished! Submit the highscore.
+            if (FirebaseManager.instance) {
+                FirebaseManager.instance.saveHighScore(this.highScore);
+            }
         }
         cc.systemEvent.emit('level-clear');
     }
